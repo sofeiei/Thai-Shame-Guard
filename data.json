@@ -58,5 +58,21 @@
   {
     "text": "กด",
     "label": "neutral"
+  },
+  {
+    "text": "ตอแหล",
+    "label": "criticism"
+  },
+  {
+    "text": "ควย",
+    "label": "criticism"
+  },
+  {
+    "text": "หน้าหี",
+    "label": "criticism"
+  },
+  {
+    "text": "อีหน้าผี",
+    "label": "abusive"
   }
 ]
