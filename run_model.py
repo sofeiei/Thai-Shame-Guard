@@ -1,28 +1,43 @@
-import sys
+from fastapi import FastAPI
+from pydantic import BaseModel
 import joblib
-import warnings
+import os
+import uvicorn
 from preprocess import preprocess_text
+from fastapi.middleware.cors import CORSMiddleware
 
-warnings.filterwarnings('ignore')
+app = FastAPI()
 
-def main():
-    if len(sys.argv) > 1:
-        comment = sys.argv[1]
-    else:
-        print("ERROR")
-        return
+# อนุญาตให้ Next.js ส่งข้อมูลข้ามมาได้ (ป้องกัน Error CORS)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# โหลดโมเดล
+model = joblib.load('model.pkl')
+vectorizer = joblib.load('vectorizer.pkl')
+
+class Item(BaseModel):
+    text: str
+
+@app.get("/")
+def read_root():
+    return {"status": "Server is Running!"}
+
+@app.post("/predict")
+def predict(item: Item):
     try:
-        model = joblib.load('model.pkl')
-        vectorizer = joblib.load('vectorizer.pkl')
-        
-        cleaned_comment = preprocess_text(comment)
-        vec_comment = vectorizer.transform([cleaned_comment])
-        prediction = model.predict(vec_comment)[0]
-        
-        print(prediction.upper())
+        cleaned = preprocess_text(item.text)
+        vec = vectorizer.transform([cleaned])
+        pred = model.predict(vec)[0]
+        return {"result": pred.upper()}
     except Exception as e:
-        print(f"ERROR: {str(e)}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
-    main()
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
